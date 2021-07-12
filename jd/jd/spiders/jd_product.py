@@ -3,6 +3,7 @@ import scrapy
 import json
 import pickle
 import urllib.parse
+import requests
 
 from selenium import webdriver
 from jsonpath import jsonpath
@@ -13,8 +14,20 @@ from scrapy_redis.spiders import RedisSpider
 class JdProductSpider(RedisSpider):
     name = 'jd_product'
     allowed_domains = ['jd.com', 'p.3.cn']
+    # allowed_domains = ['httpbin.org']
     # start_urls = ['http://jd.com/']
-    redis_key = "jd_product: category"
+    redis_key = "jd_product:category"
+
+    # def start_requests(self):
+    #     for i in range(1, 2):
+    #         url = "http://httpbin.org/get"
+    #         yield scrapy.Request(url, callback=self.parse, dont_filter=True)
+    #
+    # def parse(self, response):
+    #     print(json.loads(response.text)['ip'])
+    #     print(json.loads(response.text)['port'])
+
+
 
     # def start_requests(self):
     #     categorys = {"b_cate_url": "https://jiadian.jd.com",
@@ -28,10 +41,11 @@ class JdProductSpider(RedisSpider):
 
     def make_request_from_data(self, data):
         '''
-        根据redis中读取的二进制数据，构建请求
+        从redis中自动读取的二进制数据，构建请求
         :param data: 分类信息的二进制数据
         :return: 返回根据小分类构建的请求
         '''
+
         # 把二进制数据loads成字典
         categorys = pickle.loads(data)
         # 注意此处只能用return， 可以ctrl + B 查看源码
@@ -56,33 +70,36 @@ class JdProductSpider(RedisSpider):
     def parse_product_detail(self, response):
         item = response.meta["item"]
         result = json.loads(response.text)
-        item["product_name"] = result["wareInfo"]["basicInfo"]["name"]
-        item["product_img_url"] = result["wareInfo"]["basicInfo"]["wareImage"][0]["small"]
-        item["product_book_info"] = result["wareInfo"]["basicInfo"]["bookInfo"]
-        color_size = jsonpath(result, "$..colorSize")
-        if color_size:
-            color_size = color_size[0]
-            product_option = {}
-            for info in color_size:
-                title = info["title"]
-                value = jsonpath(info, "$..text")
-                product_option[title] = value
-                item["product_option"] = product_option
-        shop = jsonpath(result, "$..shop")
-        if shop:
-            shop = shop[0]
+        try:
+            item["product_name"] = result["wareInfo"]["basicInfo"]["name"]
+            item["product_img_url"] = result["wareInfo"]["basicInfo"]["wareImage"][0]["small"]
+            item["product_book_info"] = result["wareInfo"]["basicInfo"]["bookInfo"]
+            color_size = jsonpath(result, "$..colorSize")
+            if color_size:
+                color_size = color_size[0]
+                product_option = {}
+                for info in color_size:
+                    title = info["title"]
+                    value = jsonpath(info, "$..text")
+                    product_option[title] = value
+                    item["product_option"] = product_option
+            shop = jsonpath(result, "$..shop")
             if shop:
-                item["product_shop"] = {
-                    "shop_id": shop["shopId"],
-                    "shop_name": shop["name"],
-                    "shop_score": shop["score"]
-                }
-            else:
-                item["product_shop"] = {
-                    "shop_name": "JD自营"
-                }
-        item["product_category_id"] = result["wareInfo"]["basicInfo"]["category"]
-        item["product_category_id"] = item["product_category_id"].replace(";", ",")
+                shop = shop[0]
+                if shop:
+                    item["product_shop"] = {
+                        "shop_id": shop["shopId"],
+                        "shop_name": shop["name"],
+                        "shop_score": shop["score"]
+                    }
+                else:
+                    item["product_shop"] = {
+                        "shop_name": "JD自营"
+                    }
+            item["product_category_id"] = result["wareInfo"]["basicInfo"]["category"]
+            item["product_category_id"] = item["product_category_id"].replace(";", ",")
+        except Exception as e:
+            print(e)
 
         # 促销广告
         ad_url = "https://cd.jd.com/promotion/v2?skuId={}&area=22_1930_49324_0&cat={}".format(item["product_sku_id"], item["product_category_id"])

@@ -49,3 +49,7 @@ class Product(scrapy.Item):
     product_price = scrapy.Field()
     product_good_comments = scrapy.Field()
     product_poor_comments = scrapy.Field()
+
+class Mm(scrapy.Item):
+    url = scrapy.Field()
+    title = scrapy.Field()

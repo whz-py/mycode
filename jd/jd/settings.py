@@ -34,6 +34,7 @@ SPIDER_MODULES = ['jd.spiders']
 NEWSPIDER_MODULE = 'jd.spiders'
 
 # LOG_LEVEL = 'WARNING'
+LOG_FILE = './log.log'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'jd (+http://www.yourdomain.com)'
 
@@ -46,7 +47,7 @@ ROBOTSTXT_OBEY = False
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-# DOWNLOAD_DELAY = 1.5
+DOWNLOAD_DELAY = 1
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
@@ -59,8 +60,8 @@ ROBOTSTXT_OBEY = False
 
 # Override the default request headers:
 DEFAULT_REQUEST_HEADERS = {
-    'User-Agent': random.choice(USER_AGENTS),
-    # 'Accept': '*/*',
+    # 'User-Agent': random.choice(USER_AGENTS),
+    'Accept': '*/*',
     'Accept-Encoding': 'gzip, deflate, br',
     'Accept-Language': 'zh-CN,zh;q=0.9',
     'cookie': 'shshshfpa=f29b725a-be38-6f7c-6073-b78c9666b158-1584527806; shshshfpb=uKqDIfEGXyURsBR1%2FkxX7nQ%3D%3D; __jdu=15845278021431471266600; pinId=2hDq5R9mNGYguwrCDhih_LV9-x-f3wj7; areaId=22; user-key=40116653-91a2-486d-80ae-a4c10c22f4cc; unick=%E4%B8%B6Ever%E4%B8%B6; _tp=2Ln6pC%2BhfBybjRCcm19%2Biy2cYn4XBTyj9my4wrxz5Bs%3D; _pst=jd_447978952087c; ipLoc-djd=22-1930-50948-52157.986628109; ipLocation=%u56db%u5ddd; cn=4; unpl=V2_ZzNtbRBSQRF8C0VcKB5eVWJWFFxKVxMSIAxAAX5MVAdjVEBbclRCFnQURlRnGl4UZwYZXkRcQxBFCEdkeBBVAWMDE1VGZxBFLV0CFSNGF1wjU00zQwBBQHcJFF0uSgwDYgcaDhFTQEJ2XBVQL0oMDDdRFAhyZ0AVRQhHZHsdVQBjABRUQ1RDEHcIQ1J7GlsCYAITbXJQcyVFAU9dfxFeNWYzE20AAx8ScwFGV39UXAFuBhZeRF5CFnUNRFR%2bH1wGYAQVXENnQiV2; PCSYCityID=CN_510000_510100_510107; shshshfp=e871cfc749099fe6c014123b6b848c2f; __jdv=209449046|baidu|-|organic|not set|1606291621322; 3AB9D23F7A4B3C9B=XSKRMDSTHQTQLOD2WGMFSBNGY2QZMVLVFTEX3VN4WOMO4UGTHS3JDNGZWPOUM5EHWJ53Z6TV52NX4FVFUGOOMMUYFI; identity=b423fda4-028f-441c-a909-d4360046ab08; ssid="FnRi6ZDjQU2Eq/Bh7Fn6wQ=="; wlfstk_smdl=m7gle8ez5vmv82kchw2xymrybtk69dtv; TrackID=1u2W_SvAJAxhF6humoDGvXeOis33SYilqm1p9QFHlWQcddFRwBuzJJQc9VKbSBBIGCDAc19ebguaz2IZ-15dsir3oexNndAJnqujvms6GsT4; thor=DA0CE35F31FC38D92410494F0EE73FD867710AD7C00E832F28AF56522A3360FBF1477E64622FEEB191E07CE4532DD79160041E73C196FC6AD5C0F35CA7BF7DD5A05066E28547AA8DFAB1CBE3FA8FECCC0AA05A6435774A548FC52E5E75BA873CD8243E8F8E187A3CB6C0E97921238C72A0CE7FD6E27D8DE85953B0042F900F6DC2D1287C4EB699426C89E1B067B2B492EE9925D7326AA1D914D0D35FBB95B148; pin=jd_447978952087c; ceshi3.com=103; logining=1; __jda=209449046.15845278021431471266600.1584527802.1606291621.1606295763.97; __jdc=209449046; login=true; MNoticeIdjd_447978952087c=310; sidebarStatus=1; RT="z=1&dm=jd.com&si=9pfw5liiqi&ss=khx71cng&sl=2&tt=eh"; __jdb=209449046.8.15845278021431471266600|97.1606295763',
@@ -75,9 +76,10 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'jd.middlewares.UserAgentMiddleWare': 543,
-# }
+DOWNLOADER_MIDDLEWARES = {
+    'jd.middlewares.UserAgentMiddleWare': 546,
+    'jd.middlewares.JdSpiderProxyMiddleware': 544,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -87,10 +89,12 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-# ITEM_PIPELINES = {
-#    'jd.pipelines.CategoryPipeline': 300,
-#
-# }
+ITEM_PIPELINES = {
+    'jd.pipelines.CategoryPipeline': 300,
+    'jd.pipelines.ProductPipeline': 301,
+    'jd.pipelines.MmeiPipeline': 302,
+    'scrapy_redis.pipelines.RedisPipeline': 303  # 加上这个pipeline后结果会自动保存到redis里去
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
@@ -115,8 +119,6 @@ DEFAULT_REQUEST_HEADERS = {
 
 # MONGODB数据库的URL
 MONGO_URL = 'mongodb://127.0.0.1:27017'
-#
-#
 # 实现在setting中配置scrapy_redis
 # REDIS数据库URL
 REDIS_URL = 'redis://127.0.0.1:6379'

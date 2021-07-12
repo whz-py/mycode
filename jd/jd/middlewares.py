@@ -4,57 +4,100 @@
 #
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-
+import sys
 import random
+import requests
+import json
 from scrapy import signals
+import logging
+
+sys.setrecursionlimit(2000000)
+logger = logging.getLogger(__name__)
 
 
-class JdSpiderMiddleware(object):
-    # Not all methods need to be defined. If a method is not defined,
-    # scrapy acts as if the spider middleware does not modify the
-    # passed objects.
+class JdSpiderProxyMiddleware(object):
+    def __init__(self):
+        self.api_url = "http://api.xdaili.cn/xdaili-api//greatRecharge/getGreatIp?spiderId=fd69f3980c824e26bb7b10bc9ef3635d&orderno=YZ20216243369IoolQ0&returnType=2&count=3"
+        self.check_url = "http://httpbin.org/get"
+        self.ip_list = []
+        # count 表示正在使用ip_list中第几个ip，刚开始索引是0，也就是第一个ip
+        self.count = 0
+        # eve_count表示每个ip的使用次数，最多使用3次，切换下一个ip
+        self.eve_count = 0
+        self.new_list = []
 
-    @classmethod
-    def from_crawler(cls, crawler):
-        # This method is used by Scrapy to create your spiders.
-        s = cls()
-        crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)
-        return s
+    def getIp(self):
+        '''
+        通过api获取ip数据
+        :return:
+        '''
+        print('开始提取ip')
+        res = requests.get(url=self.api_url).text
+        self.ip_list.clear()  # 清空上一个循环列表里的ip
+        for eve_ip in json.loads(res)['RESULT']:
+            self.ip_list.append({
+                'ip': eve_ip['ip'],
+                'port': eve_ip["port"]
+            })
+        print('ip列表是：', self.ip_list)
 
-    def process_spider_input(self, response, spider):
-        # Called for each response that goes through the spider
-        # middleware and into the spider.
+    def changeProxy(self, request):
+        '''
+        切换ip，为什么是self.count-1， 因为索引是从0开始
+        :param request:
+        :return:
+        '''
+        request.meta['proxy'] = 'http://' + str(self.ip_list[self.count - 1]['ip']) + ":" + str(
+            self.ip_list[self.count - 1]['port'])
 
-        # Should return None or raise an exception.
-        return None
+    def yanzheng(self):
+        '''
+        验证ip是否可用
+        :return:
+        '''
+        print(self.ip_list[self.count - 1]['ip'])
+        # print("取列表中ip时的count值:", self.count)
+        requests.get(url=self.check_url, proxies={
+            "http://": str(self.ip_list[self.count - 1]['ip']) + ":" + str(self.ip_list[self.count - 1]['port'])}, timeout=5)
 
-    def process_spider_output(self, response, result, spider):
-        # Called with the results returned from the Spider, after
-        # it has processed the response.
 
-        # Must return an iterable of Request, dict or Item objects.
-        for i in result:
-            yield i
+    def ifUsed(self, request):
+        '''
+        进行切换并验证
+        :param request:
+        :return:
+        '''
+        try:
+            self.changeProxy(request)   # 切换ip
+            self.yanzheng()  # 验证如果可用，就会进行请求，如果报错，进行下面的步骤
+        except:
+            print('验证失败，重新提取ip')
+            if self.count == 0 or self.count == 4:
+                print('count值为0或者4，开始获取新的ip')
+                self.getIp()
+                self.count = 1   # 重置count值
+                self.eve_count = 0   # 重置eve——count值
+            else:
+                if 0 < self.count < 3:
+                    self.count += self.count
+                    print("此时的coun数是", self.count)
+                    self.ifUsed(request)
 
-    def process_spider_exception(self, response, exception, spider):
-        # Called when a spider or process_spider_input() method
-        # (from other spider middleware) raises an exception.
 
-        # Should return either None or an iterable of Request, dict
-        # or Item objects.
-        pass
+    def process_request(self, request, spider):
+        if self.count == 0 or self.count == 4:  #刚开始或者用完了列表里ip时
+            self.getIp()        # 重新取ip数据
+            self.count = 1   # count置为1
+            # print('第一个count数是:', self.count)
 
-    def process_start_requests(self, start_requests, spider):
-        # Called with the start requests of the spider, and works
-        # similarly to the process_spider_output() method, except
-        # that it doesn’t have a response associated.
-
-        # Must return only requests (not items).
-        for r in start_requests:
-            yield r
-
-    def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        if self.eve_count == 10:   # 如果一个ip使用了3次
+            self.count += 1  # count数也加1，相当于切换列表里下一个ip
+            self.eve_count = 1  # 并且把self.eve_count重置为1次
+            # print("3次调用ip后的eve-count：", self.eve_count)
+        else:
+            self.eve_count += 1
+            # print('此时的eve——count是：', self.eve_count)
+        self.ifUsed(request)   # 切换ip并且验证ip，不断循环
 
 
 class UserAgentMiddleWare(object):
