@@ -12,6 +12,7 @@ mitmdump的简单使用： 在cmd中先cd到py文件所在的位置，然后输�
 
 appium自动化控制：
     from appium import webdriver
+    from selenium.webdriver.support.ui import WebDriverWait
     cap = {
         "platformName": "Android",
         "platformVersion": "5.1.1",
@@ -19,5 +20,7 @@ appium自动化控制：
         "appPackage": "com.taptap",
         "appActivity": "com.play.taptap.ui.SplashAct",
         "noReset": True	
-    }
+    } 
     driver = webdriver.remote("http://localhost:4723/wd/hub", cap)
+    wait = WebDriverWait(driver, 5)
+    if wait.until(lambda x: x.find_element_by_xpath("xpath语句")): 判断是否出现某个元素
