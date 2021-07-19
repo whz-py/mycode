@@ -1,0 +1,23 @@
+appium和sdk的应用：
+    1.寻找安卓包的包名和activity
+    	一。先cd到sdk的build-tools文件夹中，在输入命令：aapt.exe dump badging + 包所在路径(直接把apk包拖到cmd中即可)，然后找出name和activity即可
+
+    	二。另一种方法：在cmd中输入adb shell，再输入logcat | grep cmp= 即可，然后在模拟器中把需要查询的软件打开，然后回到cmd中找到cmp=，/前面的是name，后面的是activity。
+
+
+adb devices 查看当前链接的设备地址
+
+windows下用pip install mitmproxy 安装，可以使用mitmdump和mitmweb 
+mitmdump的简单使用： 在cmd中先cd到py文件所在的位置，然后输入命令：mitmdump -s test.py -p 8889(意思是运行test.py这个文件，监听的端口是8889)
+
+appium自动化控制：
+    from appium import webdriver
+    cap = {
+        "platformName": "Android",
+        "platformVersion": "5.1.1",
+        "deviceName": "127.0.0.1:62025",
+        "appPackage": "com.taptap",
+        "appActivity": "com.play.taptap.ui.SplashAct",
+        "noReset": True	
+    }
+    driver = webdriver.remote("http://localhost:4723/wd/hub", cap)
