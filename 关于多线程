@@ -1,0 +1,152 @@
+第一种：
+线程类继承自threading.Thread
+这种继承的方式。里面必须有个run方法，适用于做的事情比较复杂，并且封装成了多个函数
+import threading
+
+
+class Mythread(threading.Thread):
+	def getpage(self):
+		pass
+
+	def parsepage(self):
+		pass
+
+	def run(self):
+		for page in range(1, 45):
+			lock.acquire()
+			self.getpage(page)
+			lock.release()
+			self.parsepage()
+
+lock = threading.Lock()
+
+if __name__ == "__main__":
+	t1 = Mythread()
+	t2 = Mythread()
+	
+	t1.start()	   start一定会自动去调用run函数，所以必须定义一个run方法
+	t2.start()
+
+第二种：
+不继承thread类的多线程
+
+def getinfo():
+	pass
+
+def parseinfo():
+	pass
+
+
+if __name__ == "__main__":
+	t1 = threading.Thread(target=getinfo, args=(1, 2,)) 
+	t2 = threading.Thread(target=parseinfo, args=(3, 4, ))
+
+	threads = [] 
+
+	t1.start()
+	t2.start()
+
+	threads.append(t1)
+	threads.append(t2)
+
+	for t in threads:
+		t.join()
+
+
+解耦：两个程序关联性太高了，需要降低耦合度。
+
+
+多进程：
+from multiprocessing import Pool
+
+def worker(file_name):
+	pass
+
+if __name__ == "__main__":
+	po = Pool(3) 创建进程池，最大进程为3
+	for file in files:   
+		po.apply_async(worker, (file,))   往进程池添加任务
+
+	po.close()
+	po.join()
+
+进程池貌似不能在类里使用？？
+
+如果一个函数中有yield语句，那么这个就不再是函数，而是一个生成器模板
+在调用函数的时候如果发现函数中有yield，那么此时不是调用函数，而是创建一个生成器对象。
+
+协程：
+import time 
+import random
+import gevent
+
+form gevent import monkey
+
+monkey.patch_all()  # 把程序中用到耗时操作的代码，换为gevent中自己实现的模块，如果不用mokey.patch_all()，那么time.sleep(1)就必须改为gevent.sleep(1)
+
+def working(coroutine_name):
+	for i in range(10):
+		print(coroutine_name, i)
+		time.sleep(1)
+
+
+	gevent.joinall([
+		gevent.spawn(working, 'work1'),  # 把创建的协程放在一个列表里
+		gevent.spawn(working, 'work2')
+	])
+
+
+
+
+
+多线程
+import threading
+import multiprocessing
+
+def parse():
+	pass
+
+def page():
+	pass
+
+if __name__ == "__main__":
+	t1 = threading.Thread(target=parse, args=(q, ))
+	t2 = threading.Thread(target=page, args=(q,))
+
+	t1.start()
+	t2.start()
+
+	threads = []
+	threads.append(t1)
+	threads.append(t2)
+	for t in threads:
+		t.join()
+
+
+
+class XianCheng(threading.Thread):
+	def __init__():
+		pass
+
+	def getpage(self):
+		pass
+
+	def parsepage(self, text):
+		pass
+
+	def run(self):
+		text = self.getpage()
+		self.parsepage(text)
+
+if __name__ == "__main__":
+	t1 = XianCheng()
+	t2 = XianCheng()
+
+	t1.start()
+	t2.start()
+
+	t1.join()
+	t2.join()
+
+	join的作用： 当进程启动的时候必定会有一个主线程，主线程之外还有其他子线程，当设置了子线程为守护线程之后，如果主线程执行完毕后，会自动退出，那么整个线程会自动结束，并不会管子线程是否执行完毕，所以join的作用就是保证子线程全部执行完毕后，主线程再退出
+
