@@ -5,7 +5,32 @@ appium和sdk的应用：
     	二。另一种方法：在cmd中输入adb shell，再输入logcat | grep cmp= 即可，然后在模拟器中把需要查询的软件打开，然后回到cmd中找到cmp=，/前面的是name，后面的是activity。
 
 
-adb devices 查看当前链接的设备地址
+adb devices   查看当前链接的设备ip 地址
+adb -s  ip地址  shell  进入设备为ip的shell
+
+
+通过电脑cmd查看手机中的文件步骤：
+adb shell
+su  授权管理员
+cd 到文件所在目录
+可以通过cp 或者mv等命令  进行文件的复制和移动(仅限手机中)
+cp /sdcard/test.png  / storage/  
+【手机中/表示根目录，根目录下有/sdcard, 也有/system等等】
+
+一：电脑上通过cmd从手机上拉取文件：
+在cmd中输入：adb pull  路径1(文件在手机上的路径)  路径2(电脑上的路径E:\images)
+
+二：把电脑上的文件发送到手机内存里：
+在cmd中输入：adb push 路径1(文件在电脑上的路径)  路径2(手机上的路径:\sdcard)
+
+
+【反编译】
+1. cd 到 wxappUnpacker所在文件夹。
+步骤：先解压主包，再解压子包（多个子包）
+命令：node wuWxapkg.js ./wyyx/abcd.wxapkg 【主包路径-->会生成一个叫abcd的文件夹】
+子包：node wuWxapkg.js ./wyyx/子包名.wxapkg -s ./wyyx/abcd 【把子包解压到主包文件夹里】
+再把解压出来的所有子包文件夹复制到主包文件夹里替换
+
 
 windows下用pip install mitmproxy 安装，可以使用mitmdump和mitmweb 
 mitmdump的简单使用： 在cmd中先cd到py文件所在的位置，然后输入命令：mitmdump -s test.py -p 8889(意思是运行test.py这个文件，监听的端口是8889)
